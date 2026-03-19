@@ -19,7 +19,7 @@ async def events(payload: EventPayload, service: EventService = Depends(get_even
         product=payload.product,
         job_id=payload.job_id,
         timestamp=payload.timestamp.isoformat(),
-        payload=payload.payload,
+        payload=payload.payload.model_dump(),
     )
     await service.process(req=req)
 
