@@ -1,11 +1,14 @@
 import logging
 from dataclasses import asdict
 
+from fastapi import HTTPException
+
 from app.application.managers.connection_manager import ConnectionManager
 from app.application.storage.job_storage import JobState, JobStorage
 from app.domain.entities.job_finished_event import JobFinishedEvent
 from app.domain.entities.job_progress_event import JobProgressEvent
 from app.domain.entities.job_started_event import JobStartedEvent
+from app.domain.exceptions.validation import EventValidationError
 from app.domain.validators.event_validator import EventValidator
 from app.domain.value_objects.event_request import EventRequest
 
@@ -19,7 +22,10 @@ class EventService:
 
     async def process(self, req: EventRequest) -> None:
         logger.info(f"[{self.__class__.__name__}.{self.process.__name__}] Processing")
-        event = EventValidator.validate(req=req)
+        try:
+            event = EventValidator.validate(req=req)
+        except EventValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         await self._dispatch(event)
 
     async def _dispatch(self, event) -> None:
